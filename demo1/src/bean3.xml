@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+       <!--        内部bean，property中，嵌套一层bean配置-->
+<!--        <bean id="emp" class="com.lcy.bean.Emp">-->
+<!--            <property name="name" value="Jack"></property>-->
+<!--            <property name="gender" value="Female"></property>-->
+<!--            <property name="dep">-->
+<!--                <bean id="dep" class="com.lcy.bean.Dep">-->
+<!--                    <property name="name" value="IT"></property>-->
+<!--                </bean>-->
+<!--            </property>-->
+<!--        </bean>-->
+
+<!--            外部bean，级联赋值-->
+<!--        <bean id="emp" class="com.lcy.bean.Emp">-->
+<!--            <property name="name" value="Jack"></property>-->
+<!--            <property name="gender" value="Female"></property>-->
+<!--            <property name="dep" ref="dep"></property>-->
+<!--        </bean>-->
+        <bean id="dep" class="com.lcy.bean.Dep" init-method="init" destroy-method="destroy">
+            <property name="name" value="IOT"></property>
+        </bean>
+
+<!--      下面这种，也是将所有的Dep都改了，不只是单独修改内部的dep-->
+    <bean id="emp" class="com.lcy.bean.Emp" init-method="init" destroy-method="destroy">
+        <property name="name" value="Jack"></property>
+        <property name="gender" value="Female"></property>
+        <property name="dep" ref="dep"></property>
+        <property name="dep.name" value="IT"></property>
+    </bean>
+
+    <bean id="myBeanPostProcessor" class="com.lcy.bean.MyBeanPostProcessor"></bean>
+
+</beans>
+

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+<!--    1. 创建对象-->
+<!--    <bean id="user" class="com.lcy.spring5.User"></bean>-->
+
+<!--    2. set方法注入属性-->
+    <bean id="user" class="com.lcy.spring5.User">
+        <property name="age" value="13"></property>
+        <property name="name" value="徐男"></property>
+    </bean>
+
+<!--        3. 参数构造,注入属性-->
+<!--    <bean id="order" class="com.lcy.spring5.Order">-->
+<!--        <constructor-arg name="id" value="1"></constructor-arg>-->
+<!--        <constructor-arg name="price" value="100.0"></constructor-arg>-->
+<!--    </bean>-->
+
+    <bean id="order" class="com.lcy.spring5.Order">
+        <property name="address">
+            <null></null>
+        </property>
+        <property name="id">
+            <value><![CDATA[<南京>]]></value>
+        </property>
+    </bean>
+
+</beans>
