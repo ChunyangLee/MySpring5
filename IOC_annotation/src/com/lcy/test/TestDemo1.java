@@ -30,4 +30,5 @@ public class TestDemo1 {
         UserService userService = context.getBean("userService", UserService.class);
         System.out.println(userService);
     }
+
 }

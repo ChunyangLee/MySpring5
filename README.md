@@ -1,7 +1,15 @@
 # MySpring5
 
 ## Spring框架概述
+> 逐步补充内充
 
+[1.9 Annotation-based Container Configuration](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#beans-autowired-annotation) 
+
+[1.12.5 Combining Java and XML Configuration](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#beans-java-conditional)
+
+[5.4.3 Pointcut Definitions](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#aop-pointcuts-combining)
+
+[5.5. Schema-based AOP Support](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#aop-schema)
  
 ## 第一部分 IOC容器
 Inversion of Control（控制反转）
@@ -33,6 +41,8 @@ spring提供的IOC容器的两种实现方式，
 ### 三. IOC操作Bean管理
 1. spring创建对象
 2. spring属性注入
+    [Dependencies and Configuration in Detail](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#beans-setter-injection)
+
 ####  3. 基于xml方式
 1. 创建对象
 ```xml
@@ -313,7 +323,9 @@ aop.jar
     - @Qualifier    叠加AutoWired使用， 根据属性名称, 可以找指定的， 同一个类型对象可能有多个
     - @Resource     类型和名称都可以， 默认值是根据类型， 加上name根据名称
     - @Value        注入普通类型属性
-
+ 
+[Annotation-based Container Configuration](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#beans-autowired-annotation) 
+ 
 ###### 4.2.1 @AutoWired
 ```java
     @Service
@@ -359,4 +371,194 @@ public class UserService {
     }
 ```
 
+xml和注解方式可以混合使用
+
+In applications where @Configuration classes are the primary mechanism for configuring the container, it is still likely necessary to use at least some XML.
+[Combining Java and XML Configuration](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#beans-java-conditional)
+
+
+
+
+
 ## 第二部分 AOP
+感觉，javaweb中的FIlter组件有点AOP思想，
+
+### 一. 底层原理
+动态代理，有接口的时候使用jdk动态代理， 无接口使用CGLIB的
+
+1. jdk动态代理
+    - 创建接口实现类，即代理对象
+    - 代理对象调用被代理对象的接口规范方法，
+    
+2. 没有接口
+    - 创建子类的代理对象
+    - 子类可以super调用父类方法，因此可以扩展父类功能, 原理是一样的
+    
+```java
+public class ProxyTest {
+    @Test
+    public void test(){
+        //p是被代理对象
+        Person p = new Person();
+        //把p的接口传进去，把p传进去
+        Sing o = (Sing)Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), p.getClass().getInterfaces(), new MyInvocationHandler(p));
+        o.sing();
+    }
+
+}
+
+class MyInvocationHandler implements InvocationHandler{
+    private Object o;
+
+    public MyInvocationHandler(Object o) {
+        this.o=o;
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        //可以在这做方法的分发，不同方法名，做不同的操作。
+
+
+        // 调用方法之前
+        System.out.println("调用"+method.getName()+"方法之前的操作///");
+        //调用被代理对象方法
+        method.invoke(o, args);
+        //调用方法之后
+        System.out.println("调用"+method.getName()+"方法之后的操作///");
+        return null;
+    }
+
+}
+```   
+
+### 二. AOP相关术语
+1. 连接点 
+    - 类中可以被增强的方法
+2. 切入点
+    - 实际被增强的方法   
+3. 通知（增强）
+    - 实际增加的逻辑部分
+    - 前置，后置，环绕，异常，最终(finally)  一共五种通知
+4. 切面
+    - 把通知应用的切入点的过程 
+    
+### 三. Spring框架一般使用AspectJ实现AOP
+1. AspectJ是独立的aop框架，不是spring的组成部分
+2. 基于AspectJ实现Aop操作
+    - 基于xml  （一般不使用，注解方式简洁方便）
+    - 基于注解
+
+### 四. 切入点表达式
+1. 确定哪个方法需要增强
+2. 语法结构
+    - execution [权限修饰符] [返回类型] [全类名] [方法名称] [参数列表]
+        
+        - execution(* com.lcy.dao.BookDAO.add(..)) 
+        - execution(* com.lcy.dao.BookDAO.*(..))   
+        - execution(* com.lcy.dao.*.*(..))
+        
+> [详细看Spring文档](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#aop-pointcuts-combining)
+        
+### 五. 基于注解方式
+1. 创建增强类
+```java
+public class User {
+
+    public int add(int i, int j){
+        return i+j;
+    }
+}
+
+public class UserAugmented {
+    public void beforeMethod(){
+        System.out.println("beforeMethod...");
+    }
+}
+
+```        
+2. 进行通知的配置
+    - spring配置文件，开启注解扫描， (  也可以MyConfig类，加上注解@Configuration，@ComponentScan(basePackages = {"com.lcy.annotationAop"})  )
+    - 创建bean对象
+    - 增强类上面加上@Aspect
+    - ***spring配置文件中开启生成代理对象***
+            ``` xml
+                <!--  开启Aspect生成代理对象  -->
+            <aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+            ```
+    - 在增强方法上配置不同类型的通知
+    
+也可以纯注解实现
+```java
+    @Configuration
+    @EnableAspectJAutoProxy
+    @ComponentScan(basePackages = {"com.lcy.annotationAop"})
+    public class MyConfig {
+    }
+```    
+
+使用例子：      
+```java
+    @Before(value = "execution(* com.lcy.annotationAop.User.add(..))")
+    public void beforeMethod(){
+        System.out.println("beforeMethod...");
+    }
+    //后置通知
+    @AfterReturning("execution(* com.lcy.annotationAop.User.add(..))")
+    public void afterReturning(){
+        System.out.println("AfterReturning....");
+    }
+    @AfterThrowing("execution(* com.lcy.annotationAop.User.add(..))")
+    public void afterThrowing(){
+        System.out.println("AfterThrowing....");
+    }
+    //最终通知
+    @After("execution(* com.lcy.annotationAop.User.add(..))")
+    public void after(){
+        System.out.println("after....");
+    }
+    @Around("execution(* com.lcy.annotationAop.User.add(..))")
+    public void around(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
+        System.out.println("around before....");
+        proceedingJoinPoint.proceed();
+        System.out.println("around after....");
+    }
+```                                         
+
+3. 重用切入点表达式
+```java
+    @Pointcut("execution(* com.lcy.annotationAop.User.add(..))")
+    public void user_add_point(){}
+
+    @Before(value = "user_add_point()")
+    public void beforeMethod(){
+        System.out.println("beforeMethod...");
+    }
+```
+
+4. 设置增强类的优先级（如果有多个增强类）
+    - 增强类上加上@Order，值越小优先级越高
+```java
+    @Component
+    @Aspect
+    @Order(1)
+```
+
+### 六. 基于xml方式
+
+```xml
+    <aop:config>
+            <!--  配置切面-->
+        <aop:aspect id="myAspect" ref="aBean">
+    
+            <aop:pointcut id="businessService"
+                expression="execution(* com.xyz.myapp.service.*.*(..)) and this(service)"/>
+    
+            <aop:before pointcut-ref="businessService" method="monitor"/>
+    
+            ...
+        </aop:aspect>
+    </aop:config>
+```
+
+
+
