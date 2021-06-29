@@ -3,18 +3,18 @@
 ## Spring框架概述
 
  
-### IOC容器
+## 第一部分 IOC容器
 Inversion of Control（控制反转）
 
 ***降低耦合度***，创建对象和对象之间的调用交给Spring管理
-#### 1. 底层原理
+### 一. 底层原理
 xml解析，工厂模式，反射
 
 1. xml解析获得class属性的值， 全类名
 2. 工厂类的getBean方法，通过反射创建对象
 3. 底层就是对象工厂
 
-#### 2. 接口
+### 二. 接口
 spring提供的IOC容器的两种实现方式，
 
 1. BeanFactory
@@ -30,10 +30,10 @@ spring提供的IOC容器的两种实现方式，
         - 全路径，从根目录开始写，
  
 
-#### 3. IOC操作Bean管理
+### 三. IOC操作Bean管理
 1. spring创建对象
 2. spring属性注入
-#####  3.1 基于xml方式
+####  3. 基于xml方式
 1. 创建对象
 ```xml
 <bean id="user" class="com.lcy.spring5.User"></bean>
@@ -232,6 +232,7 @@ DI：依赖注入，（注入属性）
    `<bean id="myBeanPostProcessor" class="com.lcy.bean.MyBeanPostProcessor"></bean>`
 
 以Emp中有个Dep为例：
+
     dep 空参构造器
     dep setNameIOT
     postProcessBeforeInitialization
@@ -246,5 +247,116 @@ DI：依赖注入，（注入属性）
     postProcessAfterInitialization
     Emp{name='Jack', gender='Female', dep=Dep{name='IT'}}
 
+##### 3.5 自动装配，（开发中一般用注解做）
+1. bean标签的autowire属性，
+2. byName根据名称，属性和id要一样， 
+    - Emp里有个属性是dep， 则外部bean的id为dep，这样才可以     
+3. byType是根据类型
+    - 有歧义会报错，如外部bean有两个类型一样的，
+    
+##### 3.6 引入外部注入文件
+1. 先引入context空间，
+2. 导入外部配置文件
+```xml
+    <context:property-placeholder location="classpath:jdbc.properties"></context:property-placeholder>
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="${driverClassName}"></property>
+        <property name="username" value="${username}"></property>
+        <property name="password" value="${password}"></property>
+        <property name="url" value="${url}"></property>
+    </bean>
+```    
 
- 
+####  4. 基于注解的方式   
+
+##### 4.1 创建对象的注解
+    - @Component
+    - @Service
+    - @Controller
+    - @Repository
+      
+1. 引入依赖
+aop.jar
+2. 开启组建扫描
+    ```xml
+       <!--  先引入context名称空间， 然后指定扫描哪些类，看哪里有注解-->
+        <context:component-scan base-package="com.lcy"></context:component-scan>
+    ```
+3. 给类上面加上注解即可
+```java
+//@Component(value = "userService")
+//@Component("userService")
+@Service
+```
+> 都可以，不写值的话，默认的是类名第一个字母小写
+> 4个注解功能是一样的，只是给开发人员区分业务逻辑用的
+
+4. 开启组建扫描的细节问题
+    -   可以配置哪些需要扫描，和哪些不需要扫描
+    -   配置只扫描@Service的
+    -   配置除去@Repository的都扫描
+
+```xml
+    <context:component-scan base-package="com.lcy" use-default-filters="false">
+            <context:include-filter type="annotation"
+                                 expression="org.springframework.stereotype.Service"/>
+    </context:component-scan>
+
+    <context:component-scan base-package="com.lcy">
+            <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Repository"/>
+    </context:component-scan>
+```
+
+
+##### 4.2 属性注入
+    - @AutoWired，  根据属性类型进行自动注入  （xml 中的 byType）
+    - @Qualifier    叠加AutoWired使用， 根据属性名称, 可以找指定的， 同一个类型对象可能有多个
+    - @Resource     类型和名称都可以， 默认值是根据类型， 加上name根据名称
+    - @Value        注入普通类型属性
+
+###### 4.2.1 @AutoWired
+```java
+    @Service
+    public class UserService {
+        @Autowired
+        private UserDAO userDAO;
+    }
+```
+
+###### 4.2.2 @Qualifier
+```java
+@Service
+public class UserService {
+    @Autowired
+    @Qualifier("userDAOimpl")
+    private UserDAO userDAO;
+}
+```
+> 用@Qualifier，上面必须加上@AutoWired， 否则可以用Resource
+
+###### 4.2.3 @Resource 
+```java
+@Service
+public class UserService {
+//    @Autowired
+//    @Qualifier("userDAOimpl")
+      @Resource(name = "userDAOimpl")
+    private UserDAO userDAO;
+```
+
+###### 4.2.4 @Value 
+```java
+    @Value("defaultName")
+    private String name;
+```
+
+##### 4.3 可以纯注解开发
+省去配置文件，xml
+```java
+    @Configuration
+    @ComponentScan(basePackages = {"com.lcy"})
+    public class SpringConfig {
+    }
+```
+
+## 第二部分 AOP
