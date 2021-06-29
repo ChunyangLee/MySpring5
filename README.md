@@ -1,3 +1,5 @@
+[TOC]
+
 # MySpring5
 
 ## Spring框架概述
@@ -10,7 +12,7 @@
 [5.4.3 Pointcut Definitions](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#aop-pointcuts-combining)
 
 [5.5. Schema-based AOP Support](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#aop-schema)
- 
+
 ## 第一部分 IOC容器
 Inversion of Control（控制反转）
 
@@ -30,13 +32,13 @@ spring提供的IOC容器的两种实现方式，
     - 加载配置文件时不创建对象，使用的时候才创建，（懒汉式）
 2. ApplicationContext
     - BeanFactory的自接口，提供更多的功能，供开发人员使用
- 
+
 3. 两个主要的实现类
     - ClassPathXmlApplicationContext
         - 路径从src开始
     - FileSystemXmlApplicationContext
         - 全路径，从根目录开始写，
- 
+
 
 ### 三. IOC操作Bean管理
 1. spring创建对象
@@ -228,7 +230,6 @@ DI：依赖注入，（注入属性）
 1. 可以设置，单实例还是多实例，默认是单实例对象
     - bean标签的scope属性，默认是singleton， 多实例：prototype
     - 设置成prototype后，不是在加载配置文件时创建对象，而是getbean时才创建
-    
 ##### 3.4 bean的生命周期
 1. 空参构造器 
 2. set方法，
@@ -263,7 +264,6 @@ DI：依赖注入，（注入属性）
     - Emp里有个属性是dep， 则外部bean的id为dep，这样才可以     
 3. byType是根据类型
     - 有歧义会报错，如外部bean有两个类型一样的，
-    
 ##### 3.6 引入外部注入文件
 1. 先引入context空间，
 2. 导入外部配置文件
@@ -275,7 +275,7 @@ DI：依赖注入，（注入属性）
         <property name="password" value="${password}"></property>
         <property name="url" value="${url}"></property>
     </bean>
-```    
+```
 
 ####  4. 基于注解的方式   
 
@@ -284,7 +284,7 @@ DI：依赖注入，（注入属性）
     - @Service
     - @Controller
     - @Repository
-      
+
 1. 引入依赖
 aop.jar
 2. 开启组建扫描
@@ -323,9 +323,9 @@ aop.jar
     - @Qualifier    叠加AutoWired使用， 根据属性名称, 可以找指定的， 同一个类型对象可能有多个
     - @Resource     类型和名称都可以， 默认值是根据类型， 加上name根据名称
     - @Value        注入普通类型属性
- 
+
 [Annotation-based Container Configuration](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#beans-autowired-annotation) 
- 
+
 ###### 4.2.1 @AutoWired
 ```java
     @Service
@@ -393,7 +393,6 @@ In applications where @Configuration classes are the primary mechanism for confi
 2. 没有接口
     - 创建子类的代理对象
     - 子类可以super调用父类方法，因此可以扩展父类功能, 原理是一样的
-    
 ```java
 public class ProxyTest {
     @Test
@@ -429,7 +428,7 @@ class MyInvocationHandler implements InvocationHandler{
     }
 
 }
-```   
+```
 
 ### 二. AOP相关术语
 1. 连接点 
@@ -441,7 +440,6 @@ class MyInvocationHandler implements InvocationHandler{
     - 前置，后置，环绕，异常，最终(finally)  一共五种通知
 4. 切面
     - 把通知应用的切入点的过程 
-    
 ### 三. Spring框架一般使用AspectJ实现AOP
 1. AspectJ是独立的aop框架，不是spring的组成部分
 2. 基于AspectJ实现Aop操作
@@ -452,13 +450,12 @@ class MyInvocationHandler implements InvocationHandler{
 1. 确定哪个方法需要增强
 2. 语法结构
     - execution [权限修饰符] [返回类型] [全类名] [方法名称] [参数列表]
-        
+      
         - execution(* com.lcy.dao.BookDAO.add(..)) 
         - execution(* com.lcy.dao.BookDAO.*(..))   
         - execution(* com.lcy.dao.*.*(..))
-        
 > [详细看Spring文档](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#aop-pointcuts-combining)
-        
+
 ### 五. 基于注解方式
 1. 创建增强类
 ```java
@@ -475,7 +472,7 @@ public class UserAugmented {
     }
 }
 
-```        
+```
 2. 进行通知的配置
     - spring配置文件，开启注解扫描， (  也可以MyConfig类，加上注解@Configuration，@ComponentScan(basePackages = {"com.lcy.annotationAop"})  )
     - 创建bean对象
@@ -486,7 +483,7 @@ public class UserAugmented {
             <aop:aspectj-autoproxy></aop:aspectj-autoproxy>
             ```
     - 在增强方法上配置不同类型的通知
-    
+
 也可以纯注解实现
 ```java
     @Configuration
@@ -494,7 +491,7 @@ public class UserAugmented {
     @ComponentScan(basePackages = {"com.lcy.annotationAop"})
     public class MyConfig {
     }
-```    
+```
 
 使用例子：      
 ```java
@@ -522,7 +519,7 @@ public class UserAugmented {
         proceedingJoinPoint.proceed();
         System.out.println("around after....");
     }
-```                                         
+```
 
 3. 重用切入点表达式
 ```java
@@ -560,5 +557,5 @@ public class UserAugmented {
     </aop:config>
 ```
 
-
+## 第三部分 
 
