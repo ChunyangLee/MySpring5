@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+              http://www.springframework.org/schema/context  http://www.springframework.org/schema/context/spring-context.xsd
+ http://www.springframework.org/schema/tx  http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
+
+
+    <context:component-scan base-package="com.lcy"></context:component-scan>
+
+    <context:property-placeholder location="classpath:jdbc.properties"></context:property-placeholder>
+
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="${driverClassName}"></property>
+        <property name="username" value="${username}"></property>
+        <property name="password" value="${password}"></property>
+        <property name="url" value="${url}"></property>
+    </bean>
+
+    <bean id="jdbctemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+
+    <!--==========事务处理部分============-->
+            <!--  1.   先配置事务管理器，-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+<!--              2. 配置通知-->
+        <tx:advice id="txadvice" transaction-manager="transactionManager">
+<!--                       配置事务相关参数-->
+            <tx:attributes>
+                <tx:method name="transfer" propagation="REQUIRED"/>
+            </tx:attributes>
+        </tx:advice>
+
+
+    <!--           3. 配置切入点和切面-->
+        <aop:config>
+            <!--               配置切入点-->
+            <aop:pointcut id="pt"  expression="execution(* com.lcy.service.impl.*.*(..))"/>
+            <aop:advisor advice-ref="txadvice" pointcut-ref="pt">
+        </aop:config>
+
+</beans>

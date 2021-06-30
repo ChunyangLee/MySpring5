@@ -13,6 +13,13 @@
 
 [5.5. Schema-based AOP Support](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#aop-schema)
 
+DATA ACCESS
+
+[3.3.1. Using JdbcTemplate](https://docs.spring.io/spring-framework/docs/current/reference/html/data-access.html#jdbc-JdbcTemplate-idioms)
+
+[1.4. Declarative Transaction Management](https://docs.spring.io/spring-framework/docs/current/reference/html/data-access.html#transaction-declarative)
+
+[1.4.1. Understanding the Spring Framework’s Declarative Transaction Implementation](https://docs.spring.io/spring-framework/docs/current/reference/html/data-access.html#transaction-declarative)
 ## 第一部分 IOC容器
 Inversion of Control（控制反转）
 
@@ -557,5 +564,179 @@ public class UserAugmented {
     </aop:config>
 ```
 
-## 第三部分 
+## 第三部分 JdbcTemplate
+spring框架对JDBC进行封装，方便实现对数据库的操作
 
+准备工作
+    - 导入依赖
+    - 配置数据库连接池
+    - 配置jdbctemplate bean对象
+    - Service类，DAO类，注入jdbctemplate 
+> 通过注解造bean 要开启组件扫描    
+        
+ [3.3.1. Using JdbcTemplate](https://docs.spring.io/spring-framework/docs/current/reference/html/data-access.html#jdbc-JdbcTemplate-idioms)
+       
+### 一. 基本CRUD操作
+1. update()
+2. queryForObject()
+    - BeanPropertyRowMapper<>实现类返回一个Bean
+3. query()
+
+### 二. 批量操作
+```java
+    public class JdbcActorDao implements ActorDao {
+    
+        private JdbcTemplate jdbcTemplate;
+    
+        public void setDataSource(DataSource dataSource) {
+            this.jdbcTemplate = new JdbcTemplate(dataSource);
+        }
+    
+        public int[] batchUpdate(final List<Actor> actors) {
+            List<Object[]> batch = new ArrayList<Object[]>();
+            for (Actor actor : actors) {
+                Object[] values = new Object[] {
+                        actor.getFirstName(), actor.getLastName(), actor.getId()};
+                batch.add(values);
+            }
+            return this.jdbcTemplate.batchUpdate(
+                    "update t_actor set first_name = ?, last_name = ? where id = ?",
+                    batch);
+        }
+    
+        // ... additional methods
+    }
+```
+
+## 第四部分 Transaction Management
+spring框架提供声明式事务管理， 
+[1.4. Declarative Transaction Management](https://docs.spring.io/spring-framework/docs/current/reference/html/data-access.html#transaction-declarative)
+
+[1.4.1. Understanding the Spring Framework’s Declarative Transaction Implementation](https://docs.spring.io/spring-framework/docs/current/reference/html/data-access.html#transaction-declarative)
+
+### 一. spring声明式事务管理
+1. 使用注解 @Transactional 
+
+```xml
+                <!--==========事务处理部分============-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+                <!--            引入tx空间，开启事务注解-->
+    <tx:annotation-driven transaction-manager="transactionManager"></tx:annotation-driven>
+
+```
+
+2. 注解@Transactional中的属性参数
+    - propagation         
+        *   事务方法： 对数据库表数据进行变化的操作
+        *   传播行为： 多个事务方法调用时，事务如何进行管理的
+            - REQUIRED: 
+            - REQUIRES_NEW: 
+    - [1.4.7. Transaction Propagation](https://docs.spring.io/spring-framework/docs/current/reference/html/data-access.html#tx-propagation)     
+            
+    - isolation         隔离级别,  mysql默认repeatable级别，
+    - timeout           规定时间内提交，否则就回滚,默认是-1，不超时。   
+    - readOnly          默认是false，
+    - rollbackFor       设置出现哪些异常会rollback
+    - noRollbackFor     设置出现哪些异常不rollback
+    
+3. 使用xml方式进行事务管理
+
+[1.4.2. Example of Declarative Transaction Implementation](https://docs.spring.io/spring-framework/docs/current/reference/html/data-access.html#transaction-declarative-first-example)
+
+```xml
+            <!--  1.   先配置事务管理器，-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+<!--              2. 配置通知-->
+        <tx:advice id="txadvice" transaction-manager="transactionManager">
+<!--                       配置事务相关参数-->
+            <tx:attributes>
+                <tx:method name="transfer" propagation="REQUIRED"/>
+            </tx:attributes>
+        </tx:advice>
+
+
+    <!--           3. 配置切入点和切面-->
+        <aop:config>
+            <!--               配置切入点-->
+            <aop:pointcut id="pt"  expression="execution(* com.lcy.service.impl.*.*(..))"/>
+            <aop:advisor advice-ref="txadvice" pointcut-ref="pt">
+        </aop:config>
+```
+    
+4. 纯注解方式
+```java
+    @Configuration
+    @ComponentScan(basePackages ={"com.lcy"})
+    @ImportResource("classpath:properties-config.xml")
+    @EnableTransactionManagement()
+    public class TxConfig {
+        @Value("${url}")
+        private String url;
+        @Value("${username}")
+        private String username;
+        @Value("${password}")
+        private String password;
+        @Value("${driverClassName}")
+        private String driverClassName;
+    
+        @Bean
+        public DataSource dataSource(){
+            DruidDataSource dataSource = new DruidDataSource();
+            dataSource.setUrl(url);
+            dataSource.setUsername(username);
+            dataSource.setPassword(password);
+            dataSource.setDriverClassName(driverClassName);
+            return dataSource;
+        }
+    
+        @Bean
+        public JdbcTemplate jdbcTemplate(DataSource dataSource){
+    //        return new JdbcTemplate(dataSource);
+            JdbcTemplate jdbcTemplate = new JdbcTemplate();
+            jdbcTemplate.setDataSource(dataSource);
+            return jdbcTemplate;
+    
+        }
+    
+        @Bean
+        public DataSourceTransactionManager dataSourceTransactionManager(DataSource dataSource){
+            DataSourceTransactionManager transactionManager = new DataSourceTransactionManager();
+            transactionManager.setDataSource(dataSource);
+            return transactionManager;
+        }
+    
+    }
+```
+
+## 第五部分 spring5新特性
+1. 整合日志框架
+    - 配置log4j2.xml即可
+2. @Nullable注解
+    - 方法，属性，参数上都可以， 方法返回值可为空，属性可为空，参数可没有
+3. lambda表达式，注册bean到ioc容器中
+4. 整合Junit5
+    - 引入spring中libs里的test依赖
+    - Junit4的写法
+        ```java
+        @RunWith(SpringJUnit4ClassRunner.class)
+        @ContextConfiguration(classes = TxConfig.class)   //使用的是纯注解的Config类，
+        public class TestDemo1 {
+            @Autowired
+            private AccountServiceimpl accountServiceimpl;
+        
+            @Test
+            public void test5(){
+                accountServiceimpl.transfer(1,2,600);
+            }
+         }
+         ```    
+    - Junit5写法
+        *   一个注解就行 @SpringJUnitConfig(classes = TxConfig.class)
+        
+
+### 二. Webflux
+         
